@@ -1,0 +1,45 @@
+---
+- hosts: all
+  become: true
+  tasks:
+
+    - name: Update all packages ...
+      yum:
+        name: '*'
+        state: latest
+        update_cache: yes
+
+    - name: Import ELRepo key
+      rpm_key:
+        state: present
+        key: https://www.elrepo.org/RPM-GPG-KEY-elrepo.org
+
+    - name: Add ELRepo repository
+      shell:
+        rpm -Uvh http://www.elrepo.org/elrepo-release-7.0-3.el7.elrepo.noarch.rp
+      args:
+        creates: /etc/yum.repos.d/elrepo.repo
+
+    - name: Upgrade kernel to the latest version
+      yum:
+        name: kernel-ml
+        enablerepo: elrepo-kernel
+        state: latest
+        update_cache: yes
+      register: upgrade
+
+    - name: Update grub configuration (assume new kernel is added at the top)
+      shell:
+        grub2-set-default 0
+      when:
+        upgrade.changed
+
+    - debug:
+        msg: "Manually reboot {{ inventory_hostname }} for changes to take effect ..."
+        
+    # - name: Restart server
+    #   command: /sbin/shutdown -r +1
+    #   async: 0
+    #   poll: 0
+    #   ignore_errors: true        
+        
