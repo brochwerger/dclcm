@@ -11,7 +11,8 @@ import sys
 
 class Inventory:
 
-    INVENTORIES = "./inventories"
+    INVENTORIES = "./inventories/"
+    BACKUPS =  INVENTORIES + "backups/"
     
     ALL_KEY = 'all'
     HOSTS_KEY = 'hosts'
@@ -23,12 +24,13 @@ class Inventory:
 
     def __init__(self, filename):
 
-        self.name = self.INVENTORIES + '/' + filename + '.yml'
+        self.name = filename
+        self.filename = self.INVENTORIES + filename + '.yml'
         self.nodeprefix = filename + '$'
         
-        if not os.path.exists(self.name):
+        if not os.path.exists(self.filename):
 
-            print("Creating new inventory: " + self.name) 
+            print("Creating new inventory: " + self.filename) 
 
             self.data = {}
             self.data[self.ALL_KEY] = {self.HOSTS_KEY: {}, self.VARS_KEY : {}}
@@ -39,9 +41,9 @@ class Inventory:
             
         else:
 
-            print("Adding nodes to inventory: " + self.name)
+            print("Adding nodes to inventory: " + self.filename)
             
-            with open(self.name, 'r') as stream:
+            with open(self.filename, 'r') as stream:
                 try:
                     self.data = yaml.load(stream)
                 except yaml.YAMLError as e:
@@ -49,12 +51,18 @@ class Inventory:
             stream.close()
 
     def save(self):
+
+        if not os.path.exists(self.INVENTORIES):
+            os.makedirs(self.INVENTORIES)
         
-        if os.path.exists(self.name):
-            shutil.copy2(self.name, self.name +
-                         '-%s' % (time.strftime('%y%m%d-%H%M%S')))
+        if not os.path.exists(self.BACKUPS):
+            os.makedirs(self.BACKUPS)
             
-        with open(self.name, 'w') as stream:
+        if os.path.exists(self.filename):
+            shutil.copy2(self.filename, self.BACKUPS + self.name +
+                         '-%s' % (time.strftime('%y%m%d-%H%M%S')) + '.yml')
+            
+        with open(self.filename, 'w') as stream:
             try:
                 yaml.dump(self.data, stream, default_flow_style=False)
             except yaml.YAMLError as e:
