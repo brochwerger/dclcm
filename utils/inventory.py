@@ -7,14 +7,11 @@ import yaml
 import os
 import time
 import shutil
-
-INVENTORY_FILE = "inventories/ngr.yml"
+import sys
 
 class Inventory:
 
-    global INVENTORY_FILE
-
-    HNPREFIX = 'rcph'
+    INVENTORIES = "./inventories"
     
     ALL_KEY = 'all'
     HOSTS_KEY = 'hosts'
@@ -24,11 +21,14 @@ class Inventory:
     WORKERS_KEY = 'docker-workers'
     ES_HOSTS_KEY = 'es-hosts'
 
-    def __init__(self, newfile = True) : 
+    def __init__(self, filename):
 
-        self.filename = INVENTORY_FILE
+        self.name = self.INVENTORIES + '/' + filename + '.yml'
+        self.nodeprefix = filename + '$'
         
-        if newfile:
+        if not os.path.exists(self.name):
+
+            print("Creating new inventory: " + self.name) 
 
             self.data = {}
             self.data[self.ALL_KEY] = {self.HOSTS_KEY: {}, self.VARS_KEY : {}}
@@ -39,7 +39,9 @@ class Inventory:
             
         else:
 
-            with open(self.filename, 'r') as stream:
+            print("Adding nodes to inventory: " + self.name)
+            
+            with open(self.name, 'r') as stream:
                 try:
                     self.data = yaml.load(stream)
                 except yaml.YAMLError as e:
@@ -48,11 +50,11 @@ class Inventory:
 
     def save(self):
         
-        if os.path.exists(self.filename):
-            shutil.copy2(self.filename, self.filename +
+        if os.path.exists(self.name):
+            shutil.copy2(self.name, self.name +
                          '-%s' % (time.strftime('%y%m%d-%H%M%S')))
             
-        with open(self.filename, 'w') as stream:
+        with open(self.name, 'w') as stream:
             try:
                 yaml.dump(self.data, stream, default_flow_style=False)
             except yaml.YAMLError as e:
@@ -63,78 +65,86 @@ class Inventory:
     def iprint(self):
         print(yaml.dump(self.data, default_flow_style=False))
 
-
     def numberOfHosts(self):
         return len(self.data[self.ALL_KEY][self.HOSTS_KEY])
 
-    def getNGRAddress(self):
-        return self.firstNodeAddress
-        
-#-------------------------------------------------------------------------------    
+#---------------------------------------------------------------------------    
 # Collect inventory data from user
-#-------------------------------------------------------------------------------    
-    def collectInventoryDataFromUser(self, firstNode=1, visionaddr = None):
+#---------------------------------------------------------------------------    
+    def collectInventoryDataFromUser(self):
 
-        i = firstNode
-        if firstNode == 1:
+        next = self.numberOfHosts() + 1
+        if next == 1:
             valid = False
             while not valid:
-                addr = raw_input("\nWhat is the NGR node IP address ? ")
+                addr = raw_input("\nWhat is the IP address for first node ? ")
                 try:
                     socket.inet_aton(addr)
                     valid = True
                 except:
                     print("Incorrect address format, try again ...")
                 self.data[self.ALL_KEY][self.HOSTS_KEY].update(
-                    {self.HNPREFIX+'01' : {'ansible_ssh_host' : addr}})
-                i = 2
+                    {self.nodeprefix+'01' : {'ansible_ssh_host' : addr}})
 
-            # inventory_userid = raw_input("\nuserid for NGR nodes? ")
-            # inventory_passwd = raw_input("password for NGR nodes? ")
-            inventory_userid = 'root'
-            inventory_passwd = 'radware'
+            inventory_userid = raw_input("\nuserid for cluster nodes? ")
+            inventory_passwd = raw_input("password for cluster nodes? ")
 
-            self.firstNodeAddress = self.data[self.ALL_KEY][self.HOSTS_KEY][self.HNPREFIX+'01']['ansible_ssh_host']
+            self.firstNodeAddress = self.data[self.ALL_KEY][self.HOSTS_KEY][self.nodeprefix+'01']['ansible_ssh_host']
             self.data[self.ALL_KEY][self.VARS_KEY] = {
                 'ansible_ssh_user' : inventory_userid, 
-                #'ansible_ssh_password' : inventory_passwd,
                 'ansible_user' : inventory_userid,
-                #'ansible_password' : inventory_passwd, 
+                'ansible_ssh_password' : inventory_passwd,
+                'ansible_password' : inventory_passwd, 
                 'docker_swarm_port' : 2377,
-                'docker_swarm_manager' : self.HNPREFIX+'01', 
-                'docker_swarm_addr': self.firstNodeAddress
-                   ,
-                'vision_address' : visionaddr
+                'docker_swarm_manager' : self.nodeprefix+'01', 
+                'docker_swarm_addr': self.firstNodeAddress,
             }
+
+            next = 2
                 
-        else:
-            while True:
-                addr = raw_input("Additional NGR node IP [type IP address (non address will stop)]? ")
-                try:
-                    socket.inet_aton(addr)
-                except:
-                    break
+        while True:
+            addr = raw_input("Add node [type IP address (non address will stop)]? ")
+            try:
+                socket.inet_aton(addr)
+            except:
+                break
 
-                self.data[self.ALL_KEY][self.HOSTS_KEY].update(
-                    {self.HNPREFIX+'%02d' % (i) : {'ansible_ssh_host' : addr}})
+            self.data[self.ALL_KEY][self.HOSTS_KEY].update(
+                {self.nodeprefix+'%02d' % (next) : {'ansible_ssh_host' : addr}})
 
-                i = i + 1
-
+            next = next + 1
             
-#-------------------------------------------------------------------------------    
+#---------------------------------------------------------------------------    
 # Update inventory (add nodes)
-#-------------------------------------------------------------------------------    
+#---------------------------------------------------------------------------    
     def updateInventory(self):
 
         for host in self.data[self.ALL_KEY][self.HOSTS_KEY]:
             
-            if (host == self.HNPREFIX+'01'):
+            if (host == self.nodeprefix+'01'):
                 self.data[self.FIRST_MGR_KEY][self.HOSTS_KEY].update(
-                    {self.HNPREFIX+'01' : None})
-            elif (host == self.HNPREFIX+'02' or host == self.HNPREFIX+'03'):
+                    {self.nodeprefix+'01' : None})
+            elif (host == self.nodeprefix+'02' or host == self.nodeprefix+'03'):
                 self.data[self.OTHER_MGRS_KEY][self.HOSTS_KEY].update({host : None})
             else:
                 self.data[self.WORKERS_KEY][self.HOSTS_KEY].update({host : None})
 
-            # In version 1.0.0 all ngr node should host es        
+            # For now, all nodes should host es        
             self.data[self.ES_HOSTS_KEY][self.HOSTS_KEY].update({host : None})
+
+#---------------------------------------------------------------------------    
+# Main
+#---------------------------------------------------------------------------    
+def main():
+
+    if len(sys.argv) != 2:
+        print("Usage: inventory filename")
+        sys.exit()
+        
+    inventory = Inventory(sys.argv[1])
+    inventory.collectInventoryDataFromUser()
+    inventory.updateInventory()
+    inventory.save()
+    
+if __name__ == "__main__":
+    main()
