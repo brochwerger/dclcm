@@ -1,0 +1,22 @@
+# Ehud's setup (at CTO2)
+10.175.99.146 ehud-1
+10.175.99.109 ehud-2
+10.175.99.108 ehud-3
+
+# Broken setup (at Yotam's ESX)
+10.183.18.216 swarm-n01
+10.183.18.217 swarm-n02
+10.183.18.218 swarm-n03
+10.183.18.219 swarm-n04
+ 
+# ELK6 setup (at  CTO1)
+10.175.93.1   snode01
+10.175.91.179 snode02
+10.175.91.160 snode03
+
+# Kubernetes+istio setup (new - at CTO1)
+10.175.99.50  knode00
+10.175.98.133 knode01
+10.175.98.83  knode02
+10.175.98.106 knode03
+
