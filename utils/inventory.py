@@ -26,7 +26,7 @@ class Inventory:
 
         self.name = filename
         self.filename = self.INVENTORIES + filename + '.yml'
-        self.nodeprefix = filename + '$'
+        self.nodeprefix = filename + '-'
         
         if not os.path.exists(self.filename):
 
