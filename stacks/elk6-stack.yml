@@ -1,9 +1,9 @@
-version: '3.4'
+version: '3'
 
 services:
 
   elasticsearch:
-    image: "bennyr/elasticsearch:6.1.1"
+    image: "bennyr/elasticsearch:6.2.1"
     #image: "docker.elastic.co/elasticsearch/elasticsearch:6.1.1"
     #image: "bennyr/esalpinecors"
     #image: "bennyr/elasticsearch:5.6.4-alpine"
@@ -37,7 +37,7 @@ services:
       - esnet
 
   kibana:
-    image: "docker.elastic.co/kibana/kibana:6.1.1"
+    image: "docker.elastic.co/kibana/kibana:6.2.1"
     environment:
       ELASTICSEARCH_URL: "http://elasticsearch:9200"
 
@@ -70,6 +70,20 @@ services:
 
   #   depends_on:
   #     - "elasticsearch"
+
+  # Cerebro Elasticsearch client
+  #cerebro:
+  #  image: yannart/cerebro:latest
+
+  #  deploy:
+  #    replicas: 1
+  #    restart_policy:
+  #      condition: on-failure
+
+  #  ports:
+  #    - "9090:9000"
+  #  networks:
+  #    - esnet
 
 volumes:
   esdata:
