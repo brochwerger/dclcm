@@ -56,24 +56,25 @@ services:
       - "elasticsearch"
 
   elastiflow:
-   image: bennyr/elastiflow:2.0
 
-   deploy:
-     replicas: 1
-     restart_policy:
-       condition: on-failure
+    image: bennyr/elastiflow:2.0
 
     environment:
       - ELASTIFLOW_ES_HOST=elasticsearch
 
-   ports:
-     - "2055:2055"
-     - "6343:6343"
-     - "4739:4739"
-     
-   networks:
-     - esnet
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: on-failure
 
+    ports:
+      - "2055:2055"
+      - "6343:6343"
+      - "4739:4739"
+     
+    networks:
+      - esnet
+     
 volumes:
   esdata:
     driver: local
