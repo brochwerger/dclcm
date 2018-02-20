@@ -1,0 +1,83 @@
+version: '3'
+
+services:
+
+  elasticsearch:
+    image: "bennyr/elasticsearch:6.2.1"
+    #image: "docker.elastic.co/elasticsearch/elasticsearch:6.1.1"
+    #image: "bennyr/esalpinecors"
+    #image: "bennyr/elasticsearch:5.6.4-alpine"
+    environment:
+      - SERVICE_NAME=elasticsearch
+#      - cluster.name=docker-cluster
+#      - bootstrap.memoryy_lock=true
+#      - "discovery.zen.ping.unicast.hosts=elasticsearch"
+#      - "ES_JAVA_OPTS=-Xms2G -Xmx2G"
+#      - http.cors.enabled="true"
+#      - http.cors.allow-origin="*"
+
+    deploy:
+      mode: global
+      restart_policy:
+        condition: on-failure
+      placement:
+        constraints:
+          - node.labels.type == eshost
+      #resources:
+      #  limits:
+      #    memory: 4G
+
+    volumes:
+      - esdata:/usr/share/elasticsearch/data
+    ports:
+      - 9200:9200
+      - 9300:9300
+
+    networks:
+      - esnet
+
+  kibana:
+    image: "docker.elastic.co/kibana/kibana:6.2.1"
+    environment:
+      ELASTICSEARCH_URL: "http://elasticsearch:9200"
+
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: on-failure
+
+    ports:
+      - 5601:5601
+
+    networks:
+      - esnet
+
+    depends_on:
+      - "elasticsearch"
+
+  elastiflow:
+   image: bennyr/elastiflow:2.0
+
+   deploy:
+     replicas: 1
+     restart_policy:
+       condition: on-failure
+
+    environment:
+      - ELASTIFLOW_ES_HOST=elasticsearch
+
+   ports:
+     - "2055:2055"
+     - "6343:6343"
+     - "4739:4739"
+     
+   networks:
+     - esnet
+
+volumes:
+  esdata:
+    driver: local
+
+networks:
+  esnet:
+    driver: overlay
