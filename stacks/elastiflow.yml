@@ -61,6 +61,9 @@ services:
 
     environment:
       - ELASTIFLOW_ES_HOST=elasticsearch
+      - ELASTIFLOW_GEOIP_DB_PATH=/etc/logstash/elastiflow/geoipdbs
+      - ELASTIFLOW_DICT_PATH=/etc/logstash/elastiflow/dictionaries
+      - ELASTIFLOW_TEMPLATE_PATH=/etc/logstash/elastiflow/templates
 
     deploy:
       replicas: 1
