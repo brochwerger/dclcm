@@ -93,9 +93,9 @@ services:
         condition: on-failure
 
     ports:
-      - "2055:2055"
-      - "6343:6343"
-      - "4739:4739"
+      - 2055:2055
+      - 6343:6343
+      - 4739:4739
      
     networks:
       - esnet
