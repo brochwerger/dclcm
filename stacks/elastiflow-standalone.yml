@@ -1,0 +1,52 @@
+version: '3'
+
+services:
+
+  elastiflow:
+
+    image: bennyr/elastiflow:2.0
+
+    environment:
+      - PATH_CONFIG=/etc/logstash/elastiflow/conf.d
+      - ELASTIFLOW_GEOIP_DB_PATH=/etc/logstash/elastiflow/geoipdbs
+      - ELASTIFLOW_DICT_PATH=/etc/logstash/elastiflow/dictionaries
+      - ELASTIFLOW_TEMPLATE_PATH=/etc/logstash/elastiflow/templates
+
+      - ELASTIFLOW_RESOLVE_IP2HOST=false
+      - ELASTIFLOW_NAMESERVER=127.0.0.1
+
+      #- ELASTIFLOW_ES_HOST=127.0.0.1
+      - ELASTIFLOW_ES_HOST=10.175.98.133
+      - ELASTIFLOW_ES_USER=elastic
+      - ELASTIFLOW_ES_PASSWD=changeme
+
+      - ELASTIFLOW_NETFLOW_HOST=0.0.0.0
+      - ELASTIFLOW_NETFLOW_PORT=2055
+      - ELASTIFLOW_NETFLOW_LASTSW_TIMESTAMP=false
+      - ELASTIFLOW_NETFLOW_TZ=UTC
+
+      - ELASTIFLOW_SFLOW_HOST=0.0.0.0
+      - ELASTIFLOW_SFLOW_PORT=6343
+
+      - ELASTIFLOW_IPFIX_TCP_HOST=0.0.0.0
+      - ELASTIFLOW_IPFIX_TCP_PORT=4739
+      - ELASTIFLOW_IPFIX_UDP_HOST=0.0.0.0
+      - ELASTIFLOW_IPFIX_UDP_PORT=4739
+
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: on-failure
+
+    ports:
+      - 2055:2055/udp
+      - 6343:6343/udp
+      - 4739:4739
+      - 4739:4739/udp
+     
+    networks:
+      - esnet
+     
+networks:
+  esnet:
+    driver: overlay
