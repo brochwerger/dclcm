@@ -57,7 +57,7 @@ services:
 
   elastiflow:
 
-    image: bennyr/esftest
+    image: bennyr/elastiflow:2.0
 
     environment:
       - PATH_CONFIG=/etc/logstash/elastiflow/conf.d
@@ -93,13 +93,17 @@ services:
         condition: on-failure
 
     ports:
-      - 2055:2055
-      - 6343:6343
+      - 2055:2055/udp
+      - 6343:6343/udp
       - 4739:4739
+      - 4739:4739/udp
      
     networks:
       - esnet
      
+    depends_on:
+      - "elasticsearch"
+      
 volumes:
   esdata:
     driver: local
