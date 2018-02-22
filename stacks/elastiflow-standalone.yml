@@ -16,7 +16,7 @@ services:
       - ELASTIFLOW_NAMESERVER=127.0.0.1
 
       #- ELASTIFLOW_ES_HOST=127.0.0.1
-      - ELASTIFLOW_ES_HOST=10.175.98.133
+      - ELASTIFLOW_ES_HOST=elasticsearch
       - ELASTIFLOW_ES_USER=elastic
       - ELASTIFLOW_ES_PASSWD=changeme
 
